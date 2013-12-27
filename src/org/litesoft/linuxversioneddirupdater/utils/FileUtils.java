@@ -1,49 +1,12 @@
 // This Source Code is in the Public Domain per: http://litesoft.org/License.txt
-package org.litesoft.util;
+package org.litesoft.linuxversioneddirupdater.utils;
 
 import java.io.*;
 import java.util.*;
 
-import org.litesoft.core.typeutils.*;
-import org.litesoft.core.typeutils.Objects;
-import org.litesoft.core.util.*;
-import org.litesoft.core.util.stringmatching.*;
-
+@SuppressWarnings("UnusedDeclaration")
 public class FileUtils extends FileUtil
 {
-    public static Reader[] filesToReaders( File pDir, String... pFileNames )
-            throws FileNotFoundException
-    {
-        if ( Objects.isNullOrEmpty( pFileNames ) )
-        {
-            throw new IllegalArgumentException( "No Files provided" );
-        }
-        Reader[] readers = new Reader[pFileNames.length];
-        for ( int i = 0; i < pFileNames.length; i++ )
-        {
-            File file = new File( pDir, pFileNames[i] );
-            readers[i] = new InformativeFileReader( file );
-        }
-        return readers;
-    }
-
-    private static class InformativeFileReader extends FileReader implements ToStringInformative
-    {
-        private File mFile;
-
-        private InformativeFileReader( File pFile )
-                throws FileNotFoundException
-        {
-            super( pFile );
-            mFile = pFile;
-        }
-
-        @Override
-        public String toString()
-        {
-            return mFile.getAbsolutePath();
-        }
-    }
 
     public static void deleteIfExists( File pFile )
             throws FileSystemException
@@ -55,45 +18,6 @@ public class FileUtils extends FileUtil
             {
                 throw new FileSystemException( "Unable to delete: " + pFile.getAbsolutePath() );
             }
-        }
-    }
-
-    public static FilenameFilter createFileNameFilter( String... pParts )
-    {
-        StringMatcher zSM = StringMatcherFactory.createStartsWith( pParts );
-        if ( zSM == null )
-        {
-            throw new IllegalArgumentException( "Must Provide something to Filter on!" );
-        }
-        return new StringMatcherFilenameFilter( zSM );
-    }
-
-    @SuppressWarnings({"UnusedDeclaration"})
-    public static String locateFile( String pFile )
-            throws FileSystemException
-    {
-        try
-        {
-            File file = new File( pFile );
-            while ( !file.isFile() )
-            {
-                File parent = file.getParentFile();
-                if ( parent != null )
-                {
-                    File grandparent = parent.getParentFile();
-                    if ( grandparent != null )
-                    {
-                        file = new File( grandparent, pFile );
-                        continue;
-                    }
-                }
-                throw new FileNotFoundException( pFile );
-            }
-            return file.getAbsolutePath();
-        }
-        catch ( IOException e )
-        {
-            throw new FileSystemException( e );
         }
     }
 
@@ -139,7 +63,7 @@ public class FileUtils extends FileUtil
             {
                 if ( !closed )
                 {
-                    Utils.dispose( is );
+                    IOUtils.dispose( is );
                 }
             }
             return b;
@@ -150,19 +74,11 @@ public class FileUtils extends FileUtil
         }
     }
 
-    public static void appendTextFile( File pFile, String... pLines )
-            throws FileSystemException
-    {
-        Objects.assertNotNull( "File", pFile );
-        File file = new File( pFile.getAbsolutePath() );
-        addLines( file, true, pLines );
-    }
-
     public static void store( File pFile, byte[] pBytes )
             throws FileSystemException
     {
         Objects.assertNotNull( "File", pFile );
-        File file = Directories.insureParent( new File( pFile.getAbsolutePath() + ".new" ) );
+        File file = new File( pFile.getAbsolutePath() + ".new" );
         try
         {
             OutputStream os = new FileOutputStream( file );
@@ -180,7 +96,7 @@ public class FileUtils extends FileUtil
             {
                 if ( !closed )
                 {
-                    Utils.dispose( os );
+                    IOUtils.dispose( os );
                 }
             }
         }
@@ -234,7 +150,7 @@ public class FileUtils extends FileUtil
         {
             if ( !closed )
             {
-                Utils.dispose( pWriter );
+                IOUtils.dispose( pWriter );
             }
         }
     }
@@ -249,7 +165,7 @@ public class FileUtils extends FileUtil
             {
                 throw new FileNotFoundException( pFile.getAbsolutePath() );
             }
-            List<String> lines = new LinkedList<String>();
+            List<String> lines = new LinkedList<>();
             BufferedReader reader = createReader( pFile );
             boolean closed = false;
             try
@@ -265,62 +181,10 @@ public class FileUtils extends FileUtil
             {
                 if ( !closed )
                 {
-                    Utils.dispose( reader );
+                    IOUtils.dispose( reader );
                 }
             }
             return lines.toArray( new String[lines.size()] );
-        }
-        catch ( IOException e )
-        {
-            throw new FileSystemException( e );
-        }
-    }
-
-    @SuppressWarnings({"UnusedDeclaration"})
-    public static String loadTextFileAsString( File pFile )
-            throws FileSystemException
-    {
-        return loadTextFileAsString( pFile, null );
-    }
-
-    public static String loadTextFileAsString( File pFile, String pLineSeparator )
-            throws FileSystemException
-    {
-        Objects.assertNotNull( "File", pFile );
-        pLineSeparator = Strings.deNull( pLineSeparator, "\n" );
-        try
-        {
-            if ( !pFile.exists() )
-            {
-                throw new FileNotFoundException( pFile.getAbsolutePath() );
-            }
-
-            StringBuilder buffer = new StringBuilder();
-            BufferedReader reader = createReader( pFile );
-            boolean closed = false;
-            try
-            {
-                int count = 0;
-                for ( String line; null != (line = reader.readLine()); count++ )
-                {
-                    if ( count > 0 )
-                    {
-                        buffer.append( pLineSeparator );
-                    }
-                    buffer.append( line );
-                }
-                closed = true;
-                reader.close();
-            }
-            finally
-            {
-                if ( !closed )
-                {
-                    Utils.dispose( reader );
-                }
-            }
-
-            return buffer.toString();
         }
         catch ( IOException e )
         {
@@ -425,117 +289,7 @@ public class FileUtils extends FileUtil
 
     private static FileSystemException renameFailed( File pSourceFile, File pDestinationFile, String pAdditionalExplanation )
     {
-        throw new FileSystemException( "Rename (" + pSourceFile.getAbsolutePath() + ") to (" + pDestinationFile.getAbsolutePath() + ") " + pAdditionalExplanation );
-    }
-
-    private static class StringMatcherFilenameFilter implements FilenameFilter
-    {
-        private StringMatcher mSM;
-
-        public StringMatcherFilenameFilter( StringMatcher pSM )
-        {
-            mSM = pSM;
-        }
-
-        @Override
-        public boolean accept( File dir, String name )
-        {
-            return mSM.matches( name );
-        }
-    }
-
-    public static void main( String[] args )
-            throws Exception
-    {
-        File zFile = new File( "PersistanceTier/design/NextGEN.xml" );
-        String[] lines = loadTextFile( zFile );
-        process( lines );
-        storeTextFile( zFile, lines );
-    }
-
-    private static void process( String[] pLines )
-    {
-        for ( int i = 0; i < pLines.length; i++ )
-        {
-            String zLine = pLines[i];
-            if ( zLine != null )
-            {
-                if ( zLine.trim().startsWith( "<column " ) )
-                {
-                    processColumn( pLines, i, findEONode( pLines, i ) );
-                }
-                else if ( zLine.trim().startsWith( "<foreignKey " ) )
-                {
-                    processForeignKey( pLines, i, findEONode( pLines, i ) );
-                }
-            }
-        }
-    }
-
-    private static int findEONode( String[] pLines, int pFromIndex )
-    {
-        int zThruIndex = pFromIndex;
-        while ( zThruIndex < pLines.length )
-        {
-            String zLine = pLines[zThruIndex];
-            if ( (zLine != null) && zLine.trim().endsWith( ">" ) )
-            {
-                break;
-            }
-            zThruIndex++;
-        }
-        return zThruIndex;
-    }
-
-    private static boolean isAttributeOneOf( String pLine, String... pOneOf )
-    {
-        for ( String s : pOneOf )
-        {
-            if ( pLine.startsWith( s + "=" ) )
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static void processColumn( String[] pLines, int pBegLine, int pEndLine )
-    {
-        for ( int i = pBegLine + 1; i < pEndLine; i++ )
-        {
-            String zLine = pLines[i];
-            if ( zLine != null )
-            {
-                zLine = zLine.trim();
-                if ( zLine.equals( "type=\"foreignKey\"" ) ) // No More Columns as ForeignKeys
-                {
-                    for ( int j = pBegLine; j <= pEndLine; j++ )
-                    {
-                        pLines[j] = null;
-                    }
-                    return;
-                }
-                if ( isAttributeOneOf( zLine, "fkonly", "isContainer", "IsContainer", "ReferenceSortColumn", "ThemDependsOnUs", "UsDependsOnThem", "table", "updateReferencedPO" ) )
-                {
-                    pLines[i] = null;
-                }
-            }
-        }
-    }
-
-    private static void processForeignKey( String[] pLines, int pBegLine, int pEndLine )
-    {
-        for ( int i = pBegLine + 1; i < pEndLine; i++ )
-        {
-            String zLine = pLines[i];
-            if ( zLine != null )
-            {
-                zLine = zLine.trim();
-                if ( isAttributeOneOf( zLine, "fkonly", "isContainer", "IsContainer", "defaultValue", "enumeration", "len" ) )
-                {
-                    pLines[i] = null;
-                }
-            }
-        }
+        throw new FileSystemException(
+                "Rename (" + pSourceFile.getAbsolutePath() + ") to (" + pDestinationFile.getAbsolutePath() + ") " + pAdditionalExplanation );
     }
 }

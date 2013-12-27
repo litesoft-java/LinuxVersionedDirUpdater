@@ -1,9 +1,7 @@
 // This Source Code is in the Public Domain per: http://litesoft.org/License.txt
-package org.litesoft.util;
+package org.litesoft.linuxversioneddirupdater.utils;
 
 import java.io.*;
-
-import org.litesoft.core.typeutils.*;
 
 public class FileUtil
 {
@@ -13,7 +11,7 @@ public class FileUtil
             throws IOException
     {
         Objects.assertNotNull( "File", pFile );
-        return new BufferedWriter( new OutputStreamWriter( new FileOutputStream( Directories.insureParent( pFile ), pAppend ), UTF_8 ) );
+        return new BufferedWriter( new OutputStreamWriter( new FileOutputStream( pFile, pAppend ), UTF_8 ) );
     }
 
     public static BufferedReader createReader( File pFile )
