@@ -2,11 +2,41 @@
 package org.litesoft.linuxversioneddirupdater.utils;
 
 import java.io.*;
-import java.util.*;
 
 @SuppressWarnings("UnusedDeclaration")
-public class FileUtils extends FileUtil
+public class FileUtils
 {
+    public static final String UTF_8 = "UTF-8";
+
+    public static String path( String pBase, String... pSubDirs )
+    {
+        if ( pSubDirs != null )
+        {
+            for ( int i = 0; i < pSubDirs.length; i++ )
+            {
+                if ( !pBase.endsWith( "/" ) )
+                {
+                    pBase += "/";
+                }
+                pBase += Strings.validateNotNullOrEmpty( "Subdir[" + i + "] of : " + pBase, pSubDirs[i] );
+            }
+        }
+        return pBase;
+    }
+
+    public static BufferedWriter createWriter( File pFile, boolean pAppend )
+            throws IOException
+    {
+        Objects.assertNotNull( "File", pFile );
+        return new BufferedWriter( new OutputStreamWriter( new FileOutputStream( pFile, pAppend ), UTF_8 ) );
+    }
+
+    public static BufferedReader createReader( File pFile )
+            throws IOException
+    {
+        Objects.assertNotNull( "File", pFile );
+        return new BufferedReader( new InputStreamReader( new FileInputStream( pFile ), UTF_8 ) );
+    }
 
     public static void deleteIfExists( File pFile )
             throws FileSystemException
@@ -165,26 +195,7 @@ public class FileUtils extends FileUtil
             {
                 throw new FileNotFoundException( pFile.getAbsolutePath() );
             }
-            List<String> lines = new LinkedList<>();
-            BufferedReader reader = createReader( pFile );
-            boolean closed = false;
-            try
-            {
-                for ( String line; null != (line = reader.readLine()); )
-                {
-                    lines.add( line );
-                }
-                closed = true;
-                reader.close();
-            }
-            finally
-            {
-                if ( !closed )
-                {
-                    IOUtils.dispose( reader );
-                }
-            }
-            return lines.toArray( new String[lines.size()] );
+            return IOUtils.loadTextFileLines( createReader( pFile ) );
         }
         catch ( IOException e )
         {

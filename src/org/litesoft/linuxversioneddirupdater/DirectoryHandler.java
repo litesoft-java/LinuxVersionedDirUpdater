@@ -1,7 +1,6 @@
 package org.litesoft.linuxversioneddirupdater;
 
-import com.sun.javaws.exceptions.*;
-import oracle.jrockit.jfr.*;
+import org.litesoft.linuxversioneddirupdater.utils.*;
 
 import java.io.*;
 
@@ -12,22 +11,23 @@ import java.io.*;
  */
 public class DirectoryHandler
 {
-    private static final String INVALID_TARGET = "Invalid target path";
-    private String mTarget;
-    private boolean mTargetPathExists;
-    private boolean mCurrentPathExists;
-    private boolean mVersionTextExists;
-    private String mCurrent;
-    private String mVersionText;
-    private String mCurrentTimeStamp;
-    private File mTargetPath;
+    private static final String INVALID_TARGET = "Invalid target path: ";
+    private static final String INVALID_REMOTE = "Invalid remote path: ";
+    private static final String UNABLE_TO_MAKE = "Unable to make: ";
+
+    private final String mTarget;
+    private final File mTargetPath;
+    private final LinkFileHandler mLinkFileHandler;
+    private final ZipFileHandler mZipFileHandler;
+    private boolean mTargetPathExists = false;
+    private String mLocalVersion;
 
     public DirectoryHandler( String pVersionedRootPath, String pTarget )
     {
         mTarget = pTarget;
         mTargetPath = checkLocalPathValidity( pVersionedRootPath );
-        // TODO: XXX
-
+        mLinkFileHandler = new LinkFileHandler( mTarget, mTargetPath );
+        mZipFileHandler = new ZipFileHandler( mTarget, mTargetPath );
     }
 
     private File checkLocalPathValidity( String pVersionedRootPath )
@@ -36,74 +36,103 @@ public class DirectoryHandler
 
         if ( !targetPath.exists() )
         {
-            mTargetPathExists = mCurrentPathExists = mVersionTextExists = false;
             return targetPath;
         }
 
-        if ( !acceptableDirectory( targetPath ) )
+        if ( !DirectoryUtils.acceptableMutableDirectory( targetPath ) )
         {
             throw new IllegalArgumentException( INVALID_TARGET + mTarget );
         }
         mTargetPathExists = true;
 
-        File currentDirectory = new File(targetPath, "current");
+        File currentDirectory = new File( targetPath, "current" );
 
-        if(!currentDirectory.exists())
+        if ( !currentDirectory.exists() )
         {
-            mCurrentPathExists = mVersionTextExists = false;
             return targetPath;
         }
 
-        if ( !acceptableDirectory( currentDirectory ) )
+        if ( !DirectoryUtils.acceptableMutableDirectory( currentDirectory ) )
         {
             throw new IllegalArgumentException( INVALID_TARGET + mTarget + "/current" );
         }
 
-        mCurrentPathExists = true;
-
-
-        File versionTextFile = new File(currentDirectory, "version.txt");
+        File versionTextFile = new File( currentDirectory, "version.txt" );
 
         if ( !versionTextFile.exists() )
         {
-            mVersionTextExists = false;
             return targetPath;
         }
 
         if ( !versionTextFile.isFile() )
         {
-            throw new IllegalArgumentException( INVALID_TARGET + mTarget + "/current/version.txt");
+            throw new IllegalArgumentException( INVALID_TARGET + mTarget + "/current/version.txt" );
         }
 
-        mVersionTextExists = true;
-
-        mCurrentTimeStamp = getTimeStamp(versionTextFile);
+        mLocalVersion = getVersion( versionTextFile );
 
         return targetPath;
     }
 
-    private String getTimeStamp( File pVersionTextFile )
+    private String getVersion( File pVersionTextFile )
     {
-        //TODO:  gather readfirstlineoffile
-        return null;
+        return Strings.getFirstEntry( FileUtils.loadTextFile( pVersionTextFile ) );
     }
 
-    private boolean acceptableDirectory( File pTargetPath )
+    private String getVersion( String pURLToVersionTextFile )
     {
-        //TODO: validate that it is readable and writeable
-        return pTargetPath.isDirectory();
+        return Strings.getFirstEntry( URLUtils.loadTextFile( pURLToVersionTextFile ) );
     }
 
     public boolean update( String pURL, String pDeploymentVersion )
     {
-     //   qualifyURL( pURL );
+        String zURLToVersionTextFile = pURL + "/" + mTarget + "/" + pDeploymentVersion + ".txt";
+        String remoteVersion = getVersion( zURLToVersionTextFile );
+        if ( remoteVersion == null )
+        {
+            throw new IllegalArgumentException( INVALID_REMOTE + zURLToVersionTextFile );
+        }
 
-        //check the deployment version against what is in place
-        //if it is the same, nothing needs to be done
-        //if it is missing then perform the update
-
-        return false; // TODO: XXX
+        if ( remoteVersion.equals( mLocalVersion ) )
+        {
+            return false;
+        }
+        updateLinkFileTo( pURL, remoteVersion );
+        return true;
     }
 
-    //is there a directory, if not, we need to create that directory immediately
+    private void updateLinkFileTo( String pURL, String pRemoteVersion )
+    {
+        if ( !mTargetPathExists )
+        {
+            if ( !mTargetPath.mkdirs() )
+            {
+                throw new FileSystemException( UNABLE_TO_MAKE + mTargetPath );
+            }
+            mTargetPathExists = true;
+        }
+        String zLinkVersion = mLinkFileHandler.getLinkVersion();
+        if ( !pRemoteVersion.equals( zLinkVersion ) )
+        {
+            ensureExplodedDirectory( pURL, pRemoteVersion );
+            mLinkFileHandler.create( pRemoteVersion );
+        }
+    }
+
+    private void ensureExplodedDirectory( String pURL, String pRemoteVersion )
+    {
+        if ( !mZipFileHandler.explodedDirectoryExists( pRemoteVersion ) )
+        {
+            ensureZipFile( pURL, pRemoteVersion );
+            mZipFileHandler.explodeZip( pRemoteVersion );
+        }
+    }
+
+    private void ensureZipFile( String pURL, String pRemoteVersion )
+    {
+        if ( !mZipFileHandler.zipExists( pRemoteVersion ) )
+        {
+            mZipFileHandler.fetchZip( pURL, pRemoteVersion );
+        }
+    }
 }

@@ -9,7 +9,7 @@ import java.util.*;
 public class Strings
 {
 
-    public static String[] validateAtLeastOne( String pWhat, String[] pCheckForEmptyEntries )
+    public static String[] validateAtLeastOne( String pWhat, String... pCheckForEmptyEntries )
     {
         if ( pCheckForEmptyEntries.length > 0 )
         {
@@ -82,8 +82,13 @@ public class Strings
         return pParameter;
     }
 
-    public static String[] deNull( String[] pStrings )
+    public static String[] deNull( String... pStrings )
     {
-        return pStrings == null ? new String[0] : pStrings;
+        return (pStrings == null) ? new String[0] : pStrings;
+    }
+
+    public static String getFirstEntry( String... pStrings )
+    {
+        return (deNull( pStrings ).length > 0) ? pStrings[0] : null;
     }
 }
