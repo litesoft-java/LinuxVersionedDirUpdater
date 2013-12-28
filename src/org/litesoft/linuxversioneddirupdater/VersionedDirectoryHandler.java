@@ -3,6 +3,8 @@ package org.litesoft.linuxversioneddirupdater;
 import org.litesoft.linuxversioneddirupdater.utils.*;
 
 import java.io.*;
+import java.util.*;
+import java.util.zip.*;
 
 /**
  * Zip File Handler for the Main updater class
@@ -11,7 +13,6 @@ import java.io.*;
  */
 public class VersionedDirectoryHandler
 {
-    private static final String UNABLE_TO_MAKE = "Unable to make: ";
     private static final String EXPECTED_ZIP_FILE = "Expected Zip file: ";
     public static final String EXPECTED_VERSIONED_DIRECTORY = "Expected Versioned Directory: ";
 
@@ -24,76 +25,77 @@ public class VersionedDirectoryHandler
         mTargetPath = pTargetPath;
     }
 
-    public boolean zipExists( String pRemoteVersion )
-    {
-        return FileUtils.existsThenAssertMutable( new File( mTargetPath, pRemoteVersion + ".zip" ), EXPECTED_ZIP_FILE );
-    }
-
-    public boolean explodedDirectoryExists( String pRemoteVersion )
-    {
-        return DirectoryUtils.existsThenAssertMutable( new File( mTargetPath, pRemoteVersion ), EXPECTED_VERSIONED_DIRECTORY );
-    }
-
-    public void explodeZip( String pRemoteVersion )
-    {
-        // TODO: XXX
-//        File zVersionedDir = new File( mTargetPath, pRemoteVersion + "-new" );
-//        ZipFile zZipFile;
-//        try
-//        {
-//            zZipFile = new ZipFile( new File( mTargetPath, pRemoteVersion + ".zip" ) );
-//        }
-//        catch ( IOException e )
-//        {
-//            throw new FileSystemException( e );
-//        }
-//
-//        try
-//        {
-//            for ( Enumeration<? extends ZipEntry> zEnumeration = zZipFile.entries(); zEnumeration.hasMoreElements(); )
-//            {
-//                ZipEntry zEntry = zEnumeration.nextElement();
-//                if ( !zEntry.isDirectory()) {
-//                    String zName = zEntry.getName();
-//                    File zOutputFile = new File( zVersionedDir, zName );
-//                    DirectoryUtils.makeParentDirs(zOutputFile)
-//                    if (!zOutputFile.getParentFile().mkdirs()) {
-//
-//                    }
-//                    InputStream zInputStream = zZipFile.getInputStream( zEntry );
-//                    IOUtils.copy( zInputStream, new FileOutputStream(  ) );
-//
-//                }
-//            }
-//        }
-//        catch ( IOException e )
-//        {
-//            IOUtils.dispose( zZipFile );
-//            throw new FileSystemException( e );
-//        }
-    }
-
-    public void fetchZip( String pURL, String pRemoteVersion )
-    {
-        URLUtils.copyURLtoFile( pURL + "/" + mTarget + "/" + pRemoteVersion + ".zip", new File( mTargetPath, "asdhgashjfa.zip" ) );
-
-        // TODO: XXX
-    }
-
     public void ensureDirectory( String pURL, String pRemoteVersion )
     {
-        if ( !explodedDirectoryExists( pRemoteVersion ) )
-        {
-            ensureZipFile( pURL, pRemoteVersion );
-            explodeZip( pRemoteVersion );
-        }
+        new VersionHelper( pRemoteVersion ).ensureDirectory( pURL );
     }
 
-    private void ensureZipFile( String pURL, String pRemoteVersion )
+    private class VersionHelper
     {
-        if ( !zipExists( pRemoteVersion ) )
+        private final String mRemoteVersion;
+        private final String mZipFileName;
+        private final File mVersionedZipFile;
+        private final File mVersionedDirectory;
+
+        private VersionHelper( String pRemoteVersion )
         {
-            fetchZip( pURL, pRemoteVersion );
+            mRemoteVersion = pRemoteVersion;
+            mVersionedZipFile = new File( mTargetPath, mZipFileName = mRemoteVersion + ".zip" );
+            mVersionedDirectory = new File( mTargetPath, mRemoteVersion );
+        }
+
+        public void ensureDirectory( String pURL )
+        {
+            if ( !DirectoryUtils.existsThenAssertMutable( mVersionedDirectory, EXPECTED_VERSIONED_DIRECTORY ) )
+            {
+                ensureZipFile( pURL );
+                explodeZip();
+            }
+            FileUtils.deleteIfExists( mVersionedZipFile );
+        }
+
+        private void ensureZipFile( String pURL )
+        {
+            if ( !FileUtils.existsThenAssertMutable( mVersionedZipFile, EXPECTED_ZIP_FILE ) )
+            {
+                AtomicFileSystemUpdateManager zUpdateManager = new AtomicFileSystemUpdateManager( mTargetPath, mZipFileName );
+                URLUtils.copyURLtoFile( pURL + "/" + mTarget + "/" + mZipFileName, zUpdateManager.getWriteFile() );
+                zUpdateManager.commit();
+            }
+        }
+
+        private void explodeZip()
+        {
+            AtomicFileSystemUpdateManager zUpdateManager = new AtomicFileSystemUpdateManager( mTargetPath, mRemoteVersion );
+            File zVersionedDir = zUpdateManager.getWriteFile();
+            ZipFile zZipFile = null;
+            try
+            {
+                zZipFile = new ZipFile( mVersionedZipFile );
+                for ( Enumeration<? extends ZipEntry> zEnumeration = zZipFile.entries(); zEnumeration.hasMoreElements(); )
+                {
+                    ZipEntry zEntry = zEnumeration.nextElement();
+                    String zName = zEntry.getName();
+                    File zDirEntry = new File( zVersionedDir, zName );
+                    if ( zEntry.isDirectory() )
+                    {
+                        DirectoryUtils.makeDirs( zDirEntry );
+                    }
+                    else // File!?
+                    {
+                        FileUtils.makeDirs( zDirEntry );
+                        InputStream zInputStream = zZipFile.getInputStream( zEntry );
+                        IOUtils.copy( zInputStream, new FileOutputStream( zDirEntry ) );
+                    }
+                }
+                FileUtils.storeTextFile( new File( zVersionedDir, "version.txt" ), mRemoteVersion );
+            }
+            catch ( IOException e )
+            {
+                IOUtils.dispose( zZipFile );
+                throw new FileSystemException( e );
+            }
+            zUpdateManager.commit();
         }
     }
 }

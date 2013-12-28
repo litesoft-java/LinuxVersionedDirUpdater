@@ -5,22 +5,42 @@ import java.io.*;
 
 public class DirectoryUtils
 {
-    public static boolean existsThenAssertMutable( File pTargetPath, String pWhy )
+    public static void ensureExistsAndMutable( File pDirectory, String pWhy )
     {
-        if ( !pTargetPath.exists() )
+        if ( !pDirectory.exists() )
+        {
+            makeDirs( pDirectory );
+        }
+        if ( !acceptableMutable( pDirectory ) )
+        {
+            throw new IllegalArgumentException( pWhy + pDirectory.getAbsolutePath() );
+        }
+    }
+
+    public static boolean existsThenAssertMutable( File pDirectory, String pWhy )
+    {
+        if ( !pDirectory.exists() )
         {
             return false;
         }
-        if ( !acceptableMutable( pTargetPath ) )
+        if ( !acceptableMutable( pDirectory ) )
         {
-            throw new IllegalArgumentException( pWhy + pTargetPath.getAbsolutePath() );
+            throw new IllegalArgumentException( pWhy + pDirectory.getAbsolutePath() );
         }
         return true;
     }
 
-    public static boolean acceptableMutable( File pTargetPath )
+    public static void makeDirs( File pDirectory )
     {
-        return pTargetPath.isDirectory() && pTargetPath.canRead() && pTargetPath.canWrite();
+        if ( !pDirectory.mkdirs() && !pDirectory.isDirectory() )
+        {
+            throw new FileSystemException( "Unable to create: " + pDirectory.getAbsolutePath() );
+        }
+    }
+
+    public static boolean acceptableMutable( File pDirectory )
+    {
+        return pDirectory.isDirectory() && pDirectory.canRead() && pDirectory.canWrite();
     }
 
     public static void purge( File pDirectory )
@@ -57,7 +77,7 @@ public class DirectoryUtils
             File entry = new File( pDirectory, file );
             if ( entry.isDirectory() )
             {
-                deleteIfExists( entry );
+                purge( entry );
             }
             else
             {

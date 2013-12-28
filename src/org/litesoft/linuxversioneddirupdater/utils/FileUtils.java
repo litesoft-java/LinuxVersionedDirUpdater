@@ -10,10 +10,12 @@ public class FileUtils
 
     public static boolean existsThenAssertMutable( File pTargetPath, String pWhy )
     {
-        if (!pTargetPath.exists()) {
+        if ( !pTargetPath.exists() )
+        {
             return false;
         }
-        if (!acceptableMutable( pTargetPath )) {
+        if ( !acceptableMutable( pTargetPath ) )
+        {
             throw new IllegalArgumentException( pWhy + pTargetPath.getAbsolutePath() );
         }
         return true;
@@ -318,5 +320,10 @@ public class FileUtils
     {
         throw new FileSystemException(
                 "Rename (" + pSourceFile.getAbsolutePath() + ") to (" + pDestinationFile.getAbsolutePath() + ") " + pAdditionalExplanation );
+    }
+
+    public static void makeDirs( File pFile )
+    {
+        DirectoryUtils.makeDirs( pFile.getParentFile() );
     }
 }

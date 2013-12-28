@@ -13,21 +13,19 @@ public class DirectoryHandler
 {
     private static final String INVALID_TARGET = "Invalid target path: ";
     private static final String INVALID_REMOTE = "Invalid remote path: ";
-    private static final String UNABLE_TO_MAKE = "Unable to make: ";
 
     private final String mTarget;
-    private final File mTargetPath;
+    private final File mTargetDirectory;
     private final LinkUpdaterHandler mLinkUpdaterHandler;
     private final VersionedDirectoryHandler mVersionedDirectoryHandler;
-    private boolean mTargetPathExists = false;
     private String mLocalVersion;
 
     public DirectoryHandler( String pVersionedRootPath, String pTarget )
     {
         mTarget = pTarget;
-        mTargetPath = checkLocalPathValidity( pVersionedRootPath );
-        mLinkUpdaterHandler = new LinkUpdaterHandler( mTarget, mTargetPath );
-        mVersionedDirectoryHandler = new VersionedDirectoryHandler( mTarget, mTargetPath );
+        mTargetDirectory = checkLocalPathValidity( pVersionedRootPath );
+        mLinkUpdaterHandler = new LinkUpdaterHandler( mTarget, mTargetDirectory );
+        mVersionedDirectoryHandler = new VersionedDirectoryHandler( mTarget, mTargetDirectory );
     }
 
     private File checkLocalPathValidity( String pVersionedRootPath )
@@ -36,8 +34,6 @@ public class DirectoryHandler
 
         if ( DirectoryUtils.existsThenAssertMutable( versionedTargetDirectory, INVALID_TARGET ) )
         {
-            mTargetPathExists = true;
-
             File currentDirectory = new File( versionedTargetDirectory, "current" );
 
             if ( DirectoryUtils.existsThenAssertMutable( currentDirectory, INVALID_TARGET ) )
@@ -82,14 +78,8 @@ public class DirectoryHandler
 
     private void updateLinkFileTo( String pURL, String pRemoteVersion )
     {
-        if ( !mTargetPathExists )
-        {
-            if ( !mTargetPath.mkdirs() )
-            {
-                throw new FileSystemException( UNABLE_TO_MAKE + mTargetPath );
-            }
-            mTargetPathExists = true;
-        }
+        DirectoryUtils.ensureExistsAndMutable( mTargetDirectory, INVALID_TARGET );
+
         String zLinkVersion = mLinkUpdaterHandler.getLinkVersion();
         if ( !pRemoteVersion.equals( zLinkVersion ) )
         {

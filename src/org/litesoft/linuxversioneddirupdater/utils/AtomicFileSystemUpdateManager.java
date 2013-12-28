@@ -5,7 +5,6 @@ import java.io.*;
 
 public class AtomicFileSystemUpdateManager
 {
-    private static final String UNABLE_TO_MAKE = "Unable to make: ";
     private static final String INVALID_PATH = "Invalid Directory: ";
 
     public static final String WRITE_SUFFIX = "-new";
@@ -34,10 +33,7 @@ public class AtomicFileSystemUpdateManager
                 throw new IllegalStateException( "Neither a File nor a Directory: " + zFile.getPath() );
             }
         }
-        if ( !DirectoryUtils.existsThenAssertMutable( mParentDirectory, INVALID_PATH ) && !mParentDirectory.mkdirs() )
-        {
-            throw new IllegalArgumentException( UNABLE_TO_MAKE + mParentDirectory.getPath() );
-        }
+        DirectoryUtils.ensureExistsAndMutable( mParentDirectory, INVALID_PATH );
     }
 
     public AtomicFileSystemUpdateManager( String pParentDirectory, String pChild )
@@ -63,6 +59,6 @@ public class AtomicFileSystemUpdateManager
     public void commit()
             throws FileSystemException
     {
-        FileUtils.rollIn( zLink, new File( zTargetPath, UPDATE_LNK ), new File( zTargetPath, UPDATE_LNK + ".bak" ) );
+        FileUtils.rollIn( getWriteFile(), getCurrentFile(), getPreviousFile() );
     }
 }

@@ -11,7 +11,6 @@ import java.io.*;
  */
 public class LinkUpdaterHandler
 {
-    private static final String UNABLE_TO_MAKE = "Unable to make: ";
     private static final String UPDATE_LNK = "updateLNK";
     private static final String LINK_STARTS_WITH = "ln -f -s ";
     private static final String LINK_STARTS_WITH_SLASH = LINK_STARTS_WITH + "/";
@@ -60,10 +59,10 @@ public class LinkUpdaterHandler
         {
             throw new FileSystemException( e );
         }
-        File zLink = new File( zTargetPath, UPDATE_LNK + ".new" );
-        FileUtils.storeTextFile( zLink,
+        AtomicFileSystemUpdateManager zUpdateManager = new AtomicFileSystemUpdateManager( zTargetPath, UPDATE_LNK );
+        FileUtils.storeTextFile( zUpdateManager.getWriteFile(),
                                  "#!/bin/bash",
                                  LINK_STARTS_WITH + FileUtils.path( zTargetPath, pRemoteVersion ) + "/ " + FileUtils.path( zTargetPath, "current" ) );
-        FileUtils.rollIn( zLink, new File( zTargetPath, UPDATE_LNK ), new File( zTargetPath, UPDATE_LNK + ".bak" ) );
+        zUpdateManager.commit();
     }
 }
