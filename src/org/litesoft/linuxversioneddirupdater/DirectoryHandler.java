@@ -17,8 +17,8 @@ public class DirectoryHandler
 
     private final String mTarget;
     private final File mTargetPath;
-    private final LinkFileHandler mLinkFileHandler;
-    private final ZipFileHandler mZipFileHandler;
+    private final LinkUpdaterHandler mLinkUpdaterHandler;
+    private final VersionedDirectoryHandler mVersionedDirectoryHandler;
     private boolean mTargetPathExists = false;
     private String mLocalVersion;
 
@@ -26,52 +26,31 @@ public class DirectoryHandler
     {
         mTarget = pTarget;
         mTargetPath = checkLocalPathValidity( pVersionedRootPath );
-        mLinkFileHandler = new LinkFileHandler( mTarget, mTargetPath );
-        mZipFileHandler = new ZipFileHandler( mTarget, mTargetPath );
+        mLinkUpdaterHandler = new LinkUpdaterHandler( mTarget, mTargetPath );
+        mVersionedDirectoryHandler = new VersionedDirectoryHandler( mTarget, mTargetPath );
     }
 
     private File checkLocalPathValidity( String pVersionedRootPath )
     {
-        File targetPath = new File( pVersionedRootPath, mTarget );
+        File versionedTargetDirectory = new File( pVersionedRootPath, mTarget );
 
-        if ( !targetPath.exists() )
+        if ( DirectoryUtils.existsThenAssertMutable( versionedTargetDirectory, INVALID_TARGET ) )
         {
-            return targetPath;
+            mTargetPathExists = true;
+
+            File currentDirectory = new File( versionedTargetDirectory, "current" );
+
+            if ( DirectoryUtils.existsThenAssertMutable( currentDirectory, INVALID_TARGET ) )
+            {
+                File versionTextFile = new File( currentDirectory, "version.txt" );
+
+                if ( FileUtils.existsThenAssertMutable( versionTextFile, INVALID_TARGET ) )
+                {
+                    mLocalVersion = getVersion( versionTextFile );
+                }
+            }
         }
-
-        if ( !DirectoryUtils.acceptableMutableDirectory( targetPath ) )
-        {
-            throw new IllegalArgumentException( INVALID_TARGET + mTarget );
-        }
-        mTargetPathExists = true;
-
-        File currentDirectory = new File( targetPath, "current" );
-
-        if ( !currentDirectory.exists() )
-        {
-            return targetPath;
-        }
-
-        if ( !DirectoryUtils.acceptableMutableDirectory( currentDirectory ) )
-        {
-            throw new IllegalArgumentException( INVALID_TARGET + mTarget + "/current" );
-        }
-
-        File versionTextFile = new File( currentDirectory, "version.txt" );
-
-        if ( !versionTextFile.exists() )
-        {
-            return targetPath;
-        }
-
-        if ( !versionTextFile.isFile() )
-        {
-            throw new IllegalArgumentException( INVALID_TARGET + mTarget + "/current/version.txt" );
-        }
-
-        mLocalVersion = getVersion( versionTextFile );
-
-        return targetPath;
+        return versionedTargetDirectory;
     }
 
     private String getVersion( File pVersionTextFile )
@@ -111,28 +90,11 @@ public class DirectoryHandler
             }
             mTargetPathExists = true;
         }
-        String zLinkVersion = mLinkFileHandler.getLinkVersion();
+        String zLinkVersion = mLinkUpdaterHandler.getLinkVersion();
         if ( !pRemoteVersion.equals( zLinkVersion ) )
         {
-            ensureExplodedDirectory( pURL, pRemoteVersion );
-            mLinkFileHandler.create( pRemoteVersion );
-        }
-    }
-
-    private void ensureExplodedDirectory( String pURL, String pRemoteVersion )
-    {
-        if ( !mZipFileHandler.explodedDirectoryExists( pRemoteVersion ) )
-        {
-            ensureZipFile( pURL, pRemoteVersion );
-            mZipFileHandler.explodeZip( pRemoteVersion );
-        }
-    }
-
-    private void ensureZipFile( String pURL, String pRemoteVersion )
-    {
-        if ( !mZipFileHandler.zipExists( pRemoteVersion ) )
-        {
-            mZipFileHandler.fetchZip( pURL, pRemoteVersion );
+            mVersionedDirectoryHandler.ensureDirectory( pURL, pRemoteVersion );
+            mLinkUpdaterHandler.create( pRemoteVersion );
         }
     }
 }

@@ -8,11 +8,12 @@ import java.io.*;
  */
 public class Objects
 {
-    public static void assertNotNull( String pWhat, Object pToCheck )
+    public static <T> T assertNotNull( String pWhat, T pToCheck )
     {
         if ( pToCheck == null )
         {
             throw new IllegalArgumentException( pWhat + " is null" );
         }
+        return pToCheck;
     }
 }

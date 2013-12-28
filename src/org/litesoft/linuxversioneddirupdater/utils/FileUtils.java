@@ -8,6 +8,22 @@ public class FileUtils
 {
     public static final String UTF_8 = "UTF-8";
 
+    public static boolean existsThenAssertMutable( File pTargetPath, String pWhy )
+    {
+        if (!pTargetPath.exists()) {
+            return false;
+        }
+        if (!acceptableMutable( pTargetPath )) {
+            throw new IllegalArgumentException( pWhy + pTargetPath.getAbsolutePath() );
+        }
+        return true;
+    }
+
+    public static boolean acceptableMutable( File pTargetPath )
+    {
+        return pTargetPath.isFile() && pTargetPath.canRead() && pTargetPath.canWrite();
+    }
+
     public static String path( String pBase, String... pSubDirs )
     {
         if ( pSubDirs != null )

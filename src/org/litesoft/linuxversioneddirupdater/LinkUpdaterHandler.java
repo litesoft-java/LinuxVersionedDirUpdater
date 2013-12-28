@@ -5,11 +5,11 @@ import org.litesoft.linuxversioneddirupdater.utils.*;
 import java.io.*;
 
 /**
- * Link File Handler for the Main updater class
+ * Link Updater (File) Handler for the Main updater class
  * <p/>
  * Created by randallb on 12/26/13.
  */
-public class LinkFileHandler
+public class LinkUpdaterHandler
 {
     private static final String UNABLE_TO_MAKE = "Unable to make: ";
     private static final String UPDATE_LNK = "updateLNK";
@@ -19,7 +19,7 @@ public class LinkFileHandler
     private final String mTarget;
     private final File mTargetPath;
 
-    public LinkFileHandler( String pTarget, File pTargetPath )
+    public LinkUpdaterHandler( String pTarget, File pTargetPath )
     {
         mTarget = pTarget;
         mTargetPath = pTargetPath;

@@ -3,15 +3,13 @@ package org.litesoft.linuxversioneddirupdater;
 import org.litesoft.linuxversioneddirupdater.utils.*;
 
 import java.io.*;
-import java.util.*;
-import java.util.zip.*;
 
 /**
  * Zip File Handler for the Main updater class
  * <p/>
  * Created by randallb on 12/26/13.
  */
-public class ZipFileHandler
+public class VersionedDirectoryHandler
 {
     private static final String UNABLE_TO_MAKE = "Unable to make: ";
     private static final String EXPECTED_ZIP_FILE = "Expected Zip file: ";
@@ -20,7 +18,7 @@ public class ZipFileHandler
     private final String mTarget;
     private final File mTargetPath;
 
-    public ZipFileHandler( String pTarget, File pTargetPath )
+    public VersionedDirectoryHandler( String pTarget, File pTargetPath )
     {
         mTarget = pTarget;
         mTargetPath = pTargetPath;
@@ -28,30 +26,12 @@ public class ZipFileHandler
 
     public boolean zipExists( String pRemoteVersion )
     {
-        File zFile = new File( mTargetPath, pRemoteVersion + ".zip" );
-        if ( zFile.exists() )
-        {
-            if ( !zFile.isFile() )
-            {
-                throw new IllegalArgumentException( EXPECTED_ZIP_FILE + zFile.getAbsolutePath() );
-            }
-            return true;
-        }
-        return false;
+        return FileUtils.existsThenAssertMutable( new File( mTargetPath, pRemoteVersion + ".zip" ), EXPECTED_ZIP_FILE );
     }
 
     public boolean explodedDirectoryExists( String pRemoteVersion )
     {
-        File zFile = new File( mTargetPath, pRemoteVersion );
-        if ( zFile.exists() )
-        {
-            if ( !zFile.isDirectory() )
-            {
-                throw new IllegalArgumentException( EXPECTED_VERSIONED_DIRECTORY + zFile.getAbsolutePath() );
-            }
-            return true;
-        }
-        return false;
+        return DirectoryUtils.existsThenAssertMutable( new File( mTargetPath, pRemoteVersion ), EXPECTED_VERSIONED_DIRECTORY );
     }
 
     public void explodeZip( String pRemoteVersion )
@@ -98,5 +78,22 @@ public class ZipFileHandler
         URLUtils.copyURLtoFile( pURL + "/" + mTarget + "/" + pRemoteVersion + ".zip", new File( mTargetPath, "asdhgashjfa.zip" ) );
 
         // TODO: XXX
+    }
+
+    public void ensureDirectory( String pURL, String pRemoteVersion )
+    {
+        if ( !explodedDirectoryExists( pRemoteVersion ) )
+        {
+            ensureZipFile( pURL, pRemoteVersion );
+            explodeZip( pRemoteVersion );
+        }
+    }
+
+    private void ensureZipFile( String pURL, String pRemoteVersion )
+    {
+        if ( !zipExists( pRemoteVersion ) )
+        {
+            fetchZip( pURL, pRemoteVersion );
+        }
     }
 }
