@@ -92,8 +92,11 @@ public class VersionedDirectoryHandler
             }
             catch ( IOException e )
             {
-                IOUtils.dispose( zZipFile );
                 throw new FileSystemException( e );
+            }
+            finally
+            {
+                IOUtils.dispose( zZipFile );
             }
             zUpdateManager.commit();
         }

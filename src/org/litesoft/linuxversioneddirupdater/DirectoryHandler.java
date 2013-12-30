@@ -14,6 +14,7 @@ public class DirectoryHandler
     private static final String INVALID_TARGET = "Invalid target path: ";
     private static final String INVALID_REMOTE = "Invalid remote path: ";
 
+    private final boolean mCritical;
     private final String mTarget;
     private final File mTargetDirectory;
     private final LinkUpdaterHandler mLinkUpdaterHandler;
@@ -22,7 +23,8 @@ public class DirectoryHandler
 
     public DirectoryHandler( String pVersionedRootPath, String pTarget )
     {
-        mTarget = pTarget;
+        mCritical = pTarget.endsWith( "!" );
+        mTarget = mCritical ? pTarget.substring( 0, pTarget.length() - 1 ) : pTarget;
         mTargetDirectory = checkLocalPathValidity( pVersionedRootPath );
         mLinkUpdaterHandler = new LinkUpdaterHandler( mTarget, mTargetDirectory );
         mVersionedDirectoryHandler = new VersionedDirectoryHandler( mTarget, mTargetDirectory );
@@ -59,21 +61,41 @@ public class DirectoryHandler
         return Strings.getFirstEntry( URLUtils.loadTextFile( pURLToVersionTextFile ) );
     }
 
-    public boolean update( String pURL, String pDeploymentVersion )
+    public Outcome update( boolean pVerbose, String pURL, String pDeploymentVersion, Callback pCallback )
     {
-        String zURLToVersionTextFile = pURL + "/" + mTarget + "/" + pDeploymentVersion + ".txt";
-        String remoteVersion = getVersion( zURLToVersionTextFile );
-        if ( remoteVersion == null )
+        Callback.Target zCallback = pCallback.start( mTarget );
+        try
         {
-            throw new IllegalArgumentException( INVALID_REMOTE + zURLToVersionTextFile );
-        }
+            String zURLToVersionTextFile = pURL + "/" + mTarget + "/" + pDeploymentVersion + ".txt";
+            String remoteVersion = getVersion( zURLToVersionTextFile );
+            if ( remoteVersion == null )
+            {
+                throw new IllegalArgumentException( INVALID_REMOTE + zURLToVersionTextFile );
+            }
 
-        if ( remoteVersion.equals( mLocalVersion ) )
-        {
-            return false;
+            if ( remoteVersion.equals( mLocalVersion ) )
+            {
+                zCallback.completeNoUpdate();
+                return Outcome.NoUpdate;
+            }
+            updateLinkFileTo( pURL, remoteVersion );
+            if ( mCritical )
+            {
+                zCallback.completeWithCriticalUpdate();
+                return Outcome.CriticalUpdate;
+            }
+            zCallback.completeWithNonCriticalUpdate();
+            return Outcome.Updated;
         }
-        updateLinkFileTo( pURL, remoteVersion );
-        return true;
+        catch ( RuntimeException e )
+        {
+            zCallback.fail( e.getMessage() );
+            if ( pVerbose )
+            {
+                e.printStackTrace( System.out );
+            }
+            return Outcome.Failed;
+        }
     }
 
     private void updateLinkFileTo( String pURL, String pRemoteVersion )
