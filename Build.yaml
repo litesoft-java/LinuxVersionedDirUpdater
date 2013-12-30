@@ -1,1 +1,3 @@
 jar: LinuxVersionedDirUpdater
+main: org.litesoft.linuxversioneddirupdater.Updater
+
