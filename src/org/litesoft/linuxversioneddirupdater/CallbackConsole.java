@@ -1,3 +1,4 @@
+// This Source Code is in the Public Domain per: http://unlicense.org
 package org.litesoft.linuxversioneddirupdater;
 
 import java.util.*;

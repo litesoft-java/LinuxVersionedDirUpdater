@@ -1,4 +1,4 @@
-// This Source Code is in the Public Domain per: http://litesoft.org/License.txt
+// This Source Code is in the Public Domain per: http://unlicense.org
 package org.litesoft.linuxversioneddirupdater.utils;
 
 import java.io.*;
