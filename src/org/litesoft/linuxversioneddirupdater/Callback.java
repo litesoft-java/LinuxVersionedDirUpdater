@@ -6,10 +6,8 @@ package org.litesoft.linuxversioneddirupdater;
  * <p/>
  * Created by randallb on 12/29/13.
  */
-public interface Callback
-{
-    interface Target
-    {
+public interface Callback {
+    interface Target {
         public void completeWithCriticalUpdate();
 
         public void completeWithNonCriticalUpdate();
@@ -19,7 +17,7 @@ public interface Callback
         public void fail( String pMessage );
     }
 
-    public void starting(int pTargets);
+    public void starting( int pTargets );
 
     public Target start( String pTarget );
 

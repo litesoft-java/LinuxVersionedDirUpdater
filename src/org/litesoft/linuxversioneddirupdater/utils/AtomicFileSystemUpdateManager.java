@@ -3,8 +3,7 @@ package org.litesoft.linuxversioneddirupdater.utils;
 
 import java.io.*;
 
-public class AtomicFileSystemUpdateManager
-{
+public class AtomicFileSystemUpdateManager {
     private static final String INVALID_PATH = "Invalid Directory: ";
 
     public static final String WRITE_SUFFIX = "-new";
@@ -13,52 +12,40 @@ public class AtomicFileSystemUpdateManager
     private final File mParentDirectory;
     private final String mChild;
 
-    public AtomicFileSystemUpdateManager( File pParentDirectory, String pChild )
-    {
+    public AtomicFileSystemUpdateManager( File pParentDirectory, String pChild ) {
         mParentDirectory = Objects.assertNotNull( "ParentDirectory", pParentDirectory );
         mChild = Strings.validateNotNullOrEmpty( "Child", pChild );
         File zFile = getWriteFile();
-        if ( zFile.exists() )
-        {
-            if ( zFile.isDirectory() )
-            {
+        if ( zFile.exists() ) {
+            if ( zFile.isDirectory() ) {
                 DirectoryUtils.purge( zFile );
-            }
-            else if ( zFile.isFile() )
-            {
+            } else if ( zFile.isFile() ) {
                 FileUtils.deleteIfExists( zFile );
-            }
-            else
-            {
+            } else {
                 throw new IllegalStateException( "Neither a File nor a Directory: " + zFile.getPath() );
             }
         }
         DirectoryUtils.ensureExistsAndMutable( mParentDirectory, INVALID_PATH );
     }
 
-    public AtomicFileSystemUpdateManager( String pParentDirectory, String pChild )
-    {
+    public AtomicFileSystemUpdateManager( String pParentDirectory, String pChild ) {
         this( new File( pParentDirectory ), pChild );
     }
 
-    public File getWriteFile()
-    {
+    public File getWriteFile() {
         return new File( mParentDirectory, mChild + WRITE_SUFFIX );
     }
 
-    public File getCurrentFile()
-    {
+    public File getCurrentFile() {
         return new File( mParentDirectory, mChild );
     }
 
-    private File getPreviousFile()
-    {
+    private File getPreviousFile() {
         return new File( mParentDirectory, mChild + PREVIOUS_SUFFIX );
     }
 
     public void commit()
-            throws FileSystemException
-    {
+            throws FileSystemException {
         FileUtils.rollIn( getWriteFile(), getCurrentFile(), getPreviousFile() );
     }
 }

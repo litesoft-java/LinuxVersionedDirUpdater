@@ -8,52 +8,39 @@ import java.util.*;
  * Collection of methods to operate on IOstreams/readers/files/etc.
  * Created by randallb on 12/27/13.
  */
-public class IOUtils
-{
+public class IOUtils {
 
-    public static void dispose( Closeable pCloseable )
-    {
-        if ( pCloseable != null )
-        {
-            try
-            {
+    public static void dispose( Closeable pCloseable ) {
+        if ( pCloseable != null ) {
+            try {
                 pCloseable.close();
             }
-            catch ( IOException ignore )
-            {
+            catch ( IOException ignore ) {
                 //ignore it
             }
         }
     }
 
     public static String[] loadTextFileLines( BufferedReader pReader )
-            throws IOException
-    {
+            throws IOException {
         List<String> lines = new LinkedList<>();
-        try
-        {
-            for ( String line; null != (line = pReader.readLine()); )
-            {
+        try {
+            for ( String line; null != (line = pReader.readLine()); ) {
                 lines.add( line );
             }
         }
-        finally
-        {
+        finally {
             dispose( pReader );
         }
         return lines.toArray( new String[lines.size()] );
     }
 
     public static void copy( InputStream pInputStream, OutputStream pOutputStream )
-            throws IOException
-    {
+            throws IOException {
         byte[] buffer = new byte[4096];
-        try
-        {
-            for ( int zBytesRead; -1 != (zBytesRead = pInputStream.read( buffer )); )
-            {
-                if ( zBytesRead != 0 )
-                {
+        try {
+            for ( int zBytesRead; -1 != (zBytesRead = pInputStream.read( buffer )); ) {
+                if ( zBytesRead != 0 ) {
                     pOutputStream.write( buffer, 0, zBytesRead );
                 }
             }
@@ -61,8 +48,7 @@ public class IOUtils
             pOutputStream = null;
             zCloseable.close();
         }
-        finally
-        {
+        finally {
             dispose( pInputStream );
             dispose( pOutputStream );
         }

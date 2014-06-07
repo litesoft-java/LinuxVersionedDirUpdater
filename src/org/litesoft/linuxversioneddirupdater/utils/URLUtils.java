@@ -9,56 +9,44 @@ import java.net.*;
  * <p/>
  * Created by randallb on 12/27/13.
  */
-public class URLUtils
-{
+public class URLUtils {
     public static String[] loadTextFile( String pURLToTextFile )
-            throws FileSystemException
-    {
+            throws FileSystemException {
         Strings.validateNotNullOrEmpty( "URLToTextFile", pURLToTextFile );
-        try
-        {
+        try {
             return IOUtils.loadTextFileLines( new BufferedReader( new InputStreamReader( getInputStream( pURLToTextFile ) ) ) );
         }
-        catch ( IOException e )
-        {
+        catch ( IOException e ) {
             throw new FileSystemException( e );
         }
     }
 
     public static void copyURLtoFile( String pURL, File pFile )
-            throws FileSystemException
-    {
+            throws FileSystemException {
         Strings.validateNotNullOrEmpty( "URL", pURL );
         Objects.assertNotNull( "File", pFile );
         InputStream zInputStream = getInputStream( pURL );
         OutputStream zOutputStream;
-        try
-        {
+        try {
             zOutputStream = new FileOutputStream( pFile );
         }
-        catch ( IOException e )
-        {
+        catch ( IOException e ) {
             IOUtils.dispose( zInputStream );
             throw new FileSystemException( e );
         }
-        try
-        {
+        try {
             IOUtils.copy( zInputStream, zOutputStream ); // Will close on completion
         }
-        catch ( IOException e )
-        {
+        catch ( IOException e ) {
             throw new FileSystemException( e );
         }
     }
 
-    private static InputStream getInputStream( String pURLToTextFile )
-    {
-        try
-        {
+    private static InputStream getInputStream( String pURLToTextFile ) {
+        try {
             return new URL( pURLToTextFile ).openStream();
         }
-        catch ( IOException e )
-        {
+        catch ( IOException e ) {
             throw new FileSystemException( e );
         }
     }

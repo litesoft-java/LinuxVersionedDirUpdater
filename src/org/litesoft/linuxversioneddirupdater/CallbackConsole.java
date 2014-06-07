@@ -5,44 +5,36 @@ import java.util.*;
 
 /**
  * Callback interfaces for Updater progress.
- *
+ * <p/>
  * Created by randallb on 12/29/13.
  */
-public class CallbackConsole implements Callback
-{
+public class CallbackConsole implements Callback {
     private final Map<String, TargetCallback> mCallbacksByTargets = new HashMap<>();
     private int mExpectedTargets;
 
     @Override
-    public void starting( int pTargets )
-    {
+    public void starting( int pTargets ) {
         mExpectedTargets = pTargets;
         mCallbacksByTargets.clear();
         System.out.println( "Update Run Started, Targets: " + pTargets );
     }
 
     @Override
-    public Target start( String pTarget )
-    {
+    public Target start( String pTarget ) {
         TargetCallback zCallback = new TargetCallback( pTarget );
         mCallbacksByTargets.put( pTarget, zCallback );
         return zCallback;
     }
 
     @Override
-    public void finished()
-    {
+    public void finished() {
         int[] zOutComeCounts = new int[Outcome.values().length];
         int zUnfinished = 0;
-        for ( TargetCallback zCallback : mCallbacksByTargets.values() )
-        {
+        for ( TargetCallback zCallback : mCallbacksByTargets.values() ) {
             Outcome zOutcome = zCallback.getOutcome();
-            if ( zOutcome == null )
-            {
+            if ( zOutcome == null ) {
                 zUnfinished++;
-            }
-            else
-            {
+            } else {
                 zOutComeCounts[zOutcome.ordinal()]++;
             }
         }
@@ -55,44 +47,37 @@ public class CallbackConsole implements Callback
         System.out.println( "                  NotStarted: " + (mExpectedTargets - mCallbacksByTargets.size()) );
     }
 
-    private static class TargetCallback implements Target
-    {
+    private static class TargetCallback implements Target {
         private Outcome mOutcome;
 
-        private TargetCallback( String pTarget )
-        {
+        private TargetCallback( String pTarget ) {
             System.out.print( "    " + pTarget + ":" );
         }
 
-        public Outcome getOutcome()
-        {
+        public Outcome getOutcome() {
             return mOutcome;
         }
 
         @Override
-        public void completeWithCriticalUpdate()
-        {
+        public void completeWithCriticalUpdate() {
             System.out.println( " Critical Update" );
             mOutcome = Outcome.CriticalUpdate;
         }
 
         @Override
-        public void completeWithNonCriticalUpdate()
-        {
+        public void completeWithNonCriticalUpdate() {
             System.out.println( " Non-Critical Update" );
             mOutcome = Outcome.Updated;
         }
 
         @Override
-        public void completeNoUpdate()
-        {
+        public void completeNoUpdate() {
             System.out.println( " No update" );
             mOutcome = Outcome.NoUpdate;
         }
 
         @Override
-        public void fail( String pMessage )
-        {
+        public void fail( String pMessage ) {
             System.out.println( " Update FAILED, Message: " + pMessage );
             mOutcome = Outcome.Failed;
         }

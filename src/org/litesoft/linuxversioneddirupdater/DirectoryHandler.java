@@ -10,8 +10,7 @@ import java.io.*;
  * <p/>
  * Created by randallb on 12/26/13.
  */
-public class DirectoryHandler
-{
+public class DirectoryHandler {
     private static final String INVALID_TARGET = "Invalid target path: ";
     private static final String INVALID_REMOTE = "Invalid remote path: ";
 
@@ -22,8 +21,7 @@ public class DirectoryHandler
     private final VersionedDirectoryHandler mVersionedDirectoryHandler;
     private String mLocalVersion;
 
-    public DirectoryHandler( String pVersionedRootPath, String pTarget )
-    {
+    public DirectoryHandler( String pVersionedRootPath, String pTarget ) {
         mCritical = pTarget.endsWith( "!" );
         mTarget = mCritical ? pTarget.substring( 0, pTarget.length() - 1 ) : pTarget;
         mTargetDirectory = checkLocalPathValidity( pVersionedRootPath );
@@ -31,20 +29,16 @@ public class DirectoryHandler
         mVersionedDirectoryHandler = new VersionedDirectoryHandler( mTarget, mTargetDirectory );
     }
 
-    private File checkLocalPathValidity( String pVersionedRootPath )
-    {
+    private File checkLocalPathValidity( String pVersionedRootPath ) {
         File versionedTargetDirectory = new File( pVersionedRootPath, mTarget );
 
-        if ( DirectoryUtils.existsThenAssertMutable( versionedTargetDirectory, INVALID_TARGET ) )
-        {
+        if ( DirectoryUtils.existsThenAssertMutable( versionedTargetDirectory, INVALID_TARGET ) ) {
             File currentDirectory = new File( versionedTargetDirectory, "current" );
 
-            if ( DirectoryUtils.existsThenAssertMutable( currentDirectory, INVALID_TARGET ) )
-            {
+            if ( DirectoryUtils.existsThenAssertMutable( currentDirectory, INVALID_TARGET ) ) {
                 File versionTextFile = new File( currentDirectory, "version.txt" );
 
-                if ( FileUtils.existsThenAssertMutable( versionTextFile, INVALID_TARGET ) )
-                {
+                if ( FileUtils.existsThenAssertMutable( versionTextFile, INVALID_TARGET ) ) {
                     mLocalVersion = getVersion( versionTextFile );
                 }
             }
@@ -52,60 +46,49 @@ public class DirectoryHandler
         return versionedTargetDirectory;
     }
 
-    private String getVersion( File pVersionTextFile )
-    {
+    private String getVersion( File pVersionTextFile ) {
         return Strings.getFirstEntry( FileUtils.loadTextFile( pVersionTextFile ) );
     }
 
-    private String getVersion( String pURLToVersionTextFile )
-    {
+    private String getVersion( String pURLToVersionTextFile ) {
         return Strings.getFirstEntry( URLUtils.loadTextFile( pURLToVersionTextFile ) );
     }
 
-    public Outcome update( boolean pVerbose, String pURL, String pDeploymentVersion, Callback pCallback )
-    {
+    public Outcome update( boolean pVerbose, String pURL, String pDeploymentVersion, Callback pCallback ) {
         Callback.Target zCallback = pCallback.start( mTarget );
-        try
-        {
+        try {
             String zURLToVersionTextFile = pURL + "/" + mTarget + "/" + pDeploymentVersion + ".txt";
             String remoteVersion = getVersion( zURLToVersionTextFile );
-            if ( remoteVersion == null )
-            {
+            if ( remoteVersion == null ) {
                 throw new IllegalArgumentException( INVALID_REMOTE + zURLToVersionTextFile );
             }
 
-            if ( remoteVersion.equals( mLocalVersion ) )
-            {
+            if ( remoteVersion.equals( mLocalVersion ) ) {
                 zCallback.completeNoUpdate();
                 return Outcome.NoUpdate;
             }
             updateLinkFileTo( pURL, remoteVersion );
-            if ( mCritical )
-            {
+            if ( mCritical ) {
                 zCallback.completeWithCriticalUpdate();
                 return Outcome.CriticalUpdate;
             }
             zCallback.completeWithNonCriticalUpdate();
             return Outcome.Updated;
         }
-        catch ( RuntimeException e )
-        {
+        catch ( RuntimeException e ) {
             zCallback.fail( e.getMessage() );
-            if ( pVerbose )
-            {
+            if ( pVerbose ) {
                 e.printStackTrace( System.out );
             }
             return Outcome.Failed;
         }
     }
 
-    private void updateLinkFileTo( String pURL, String pRemoteVersion )
-    {
+    private void updateLinkFileTo( String pURL, String pRemoteVersion ) {
         DirectoryUtils.ensureExistsAndMutable( mTargetDirectory, INVALID_TARGET );
 
         String zLinkVersion = mLinkUpdaterHandler.getLinkVersion();
-        if ( !pRemoteVersion.equals( zLinkVersion ) )
-        {
+        if ( !pRemoteVersion.equals( zLinkVersion ) ) {
             mVersionedDirectoryHandler.ensureDirectory( pURL, pRemoteVersion );
             mLinkUpdaterHandler.create( pRemoteVersion );
         }
