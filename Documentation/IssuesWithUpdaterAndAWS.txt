@@ -1,0 +1,15 @@
+
+Problems:
+
+        1) AWS AMI's are updated on Launch, therefor there is a need for Periodic Re-Launch!
+
+        2) If on Launch, the Updater can not reach the Web Source for its dependencies, the Launch will fail.
+
+Solutions:
+
+        a) Launch Image needs to be provided with all its dependencies.
+
+        b) Updater proceeds if Everything There, & Can't talk to Web Source.
+
+        c) API based AMI Launcher & Re-Imager (to snag an Updated and dependency resolved Image).
+
