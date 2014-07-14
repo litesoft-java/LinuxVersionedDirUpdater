@@ -9,8 +9,6 @@ import java.util.zip.*;
 
 /**
  * Zip File Handler for the Main updater class
- * <p/>
- * Created by randallb on 12/26/13.
  */
 public class VersionedDirectoryHandler {
     private static final String EXPECTED_ZIP_FILE = "Expected Zip file: ";
@@ -81,7 +79,7 @@ public class VersionedDirectoryHandler {
                 throw new FileSystemException( e );
             }
             finally {
-                IOUtils.dispose( zZipFile );
+                Closeables.dispose( zZipFile );
             }
             zUpdateManager.commit();
         }

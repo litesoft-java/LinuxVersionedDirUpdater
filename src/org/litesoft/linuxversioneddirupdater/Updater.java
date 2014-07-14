@@ -5,8 +5,6 @@ import org.litesoft.linuxversioneddirupdater.utils.*;
 
 /**
  * Master updater
- * <p/>
- * Created by randallb on 12/26/13.
  */
 public class Updater {
 
@@ -14,6 +12,7 @@ public class Updater {
     public static final int INVALID_ARGUMENTS = 2;
     public static final int INVALID_FAILURES = 3;
     public static final String VERSIONED_ROOT_PATH = "/versioned";
+
     private final String mURL;
     private final String mDeploymentVersion;
     private final DirectoryHandler[] mDirectoryHandlers;
@@ -24,7 +23,8 @@ public class Updater {
         mDeploymentVersion = Strings.validateNotNullOrEmpty( "DeploymentVersion", pDeploymentVersion );
         mDirectoryHandlers = createDirectoryHandlers( Strings.validateAtLeastOne(
                 "CSVTargets", Strings.checkForEmptyEntries(
-                        "CSVTargets", Strings.parseSimpleCSV( Strings.validateNotNullOrEmpty( "CSVTargets", pCSVTargets ) ) ) ) );
+                        "CSVTargets", Strings.parseSimpleCSV( Strings.validateNotNullOrEmpty(
+                                "CSVTargets", pCSVTargets ) ) ) ) );
     }
 
     private DirectoryHandler[] createDirectoryHandlers( String[] pTargets ) {
@@ -36,15 +36,17 @@ public class Updater {
     }
 
     public static void main( String[] args ) {
-        if ( args.length != 3 ) // validate that we have 3 params
-        {
+        if ( args.length != 3 ) { // validate that we have 3 params
             System.out.println( "Please provide three parameters" );
             System.exit( INVALID_PARAMETER_COUNT );
         }
 
         try {
-            if ( !new Updater( args[0], args[1], args[2] ).run( true, new CallbackConsole() ) ) {
-                System.exit( INVALID_FAILURES );
+            Updater zUpdater = new Updater( args[0], args[1], args[2] );
+            if ( !zUpdater.run( true, new CallbackConsole() ) ) {
+                if ( !zUpdater.getState().isRunnable() ) {
+                    System.exit( INVALID_FAILURES );
+                }
             }
         }
         catch ( IllegalArgumentException e ) {
@@ -55,6 +57,8 @@ public class Updater {
 
     /**
      * return True if there is No Failures!
+     *
+     * Note: may be called under a different Thread!
      */
     public boolean run( boolean pVerbose, Callback pCallback ) {
         boolean zFailures = false;
@@ -64,5 +68,16 @@ public class Updater {
         }
         pCallback.finished();
         return !zFailures;
+    }
+
+    /**
+     * Note: probably called under a different Thread!
+     */
+    public State getState() {
+        VersionedTargetTriad[] zTriads = new VersionedTargetTriad[mDirectoryHandlers.length];
+        for ( int i = 0; i < mDirectoryHandlers.length; i++ ) {
+            zTriads[i] = mDirectoryHandlers[i].getState();
+        }
+        return new State( mDeploymentVersion, zTriads );
     }
 }

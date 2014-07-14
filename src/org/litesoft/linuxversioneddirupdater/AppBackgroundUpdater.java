@@ -3,8 +3,6 @@ package org.litesoft.linuxversioneddirupdater;
 
 /**
  * Callback interfaces for Updater progress.
- * <p/>
- * Created by randallb on 12/29/13.
  */
 public abstract class AppBackgroundUpdater {
     private final Updater mUpdater;
@@ -30,6 +28,10 @@ public abstract class AppBackgroundUpdater {
         } );
         zThread.setDaemon( pAsDaemon );
         zThread.start();
+    }
+
+    public State getState() {
+        return mUpdater.getState();
     }
 
     abstract protected void statsReady();
@@ -80,7 +82,7 @@ public abstract class AppBackgroundUpdater {
         }
 
         @Override
-        public Target start( String pTarget ) {
+        public Target start( String pTarget, String pLocalVersion ) {
             mStarted++;
             return this;
         }
@@ -91,12 +93,12 @@ public abstract class AppBackgroundUpdater {
         }
 
         @Override
-        public void completeWithCriticalUpdate() {
+        public void completeWithCriticalUpdate( String pPendingUpdatedVersion ) {
             record( Outcome.CriticalUpdate );
         }
 
         @Override
-        public void completeWithNonCriticalUpdate() {
+        public void completeWithNonCriticalUpdate( String pPendingUpdatedVersion ) {
             record( Outcome.Updated );
         }
 

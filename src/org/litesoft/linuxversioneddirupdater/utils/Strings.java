@@ -5,7 +5,6 @@ import java.util.*;
 
 /**
  * Collection of methods to operate on String objects
- * Created by randallb on 12/27/13.
  */
 public class Strings {
 
@@ -78,5 +77,9 @@ public class Strings {
 
     public static String getFirstEntry( String... pStrings ) {
         return (deNull( pStrings ).length > 0) ? pStrings[0] : null;
+    }
+
+    public static int length( String pText ) {
+        return (pText == null) ? 0 : pText.length();
     }
 }

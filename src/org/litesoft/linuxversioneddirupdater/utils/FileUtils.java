@@ -5,8 +5,6 @@ import java.io.*;
 
 @SuppressWarnings("UnusedDeclaration")
 public class FileUtils {
-    public static final String UTF_8 = "UTF-8";
-
     public static boolean existsThenAssertMutable( File pTargetPath, String pWhy ) {
         if ( !pTargetPath.exists() ) {
             return false;
@@ -36,13 +34,13 @@ public class FileUtils {
     public static BufferedWriter createWriter( File pFile, boolean pAppend )
             throws IOException {
         Objects.assertNotNull( "File", pFile );
-        return new BufferedWriter( new OutputStreamWriter( new FileOutputStream( pFile, pAppend ), UTF_8 ) );
+        return new BufferedWriter( new OutputStreamWriter( new FileOutputStream( pFile, pAppend ), IOUtils.UTF_8 ) );
     }
 
     public static BufferedReader createReader( File pFile )
             throws IOException {
         Objects.assertNotNull( "File", pFile );
-        return new BufferedReader( new InputStreamReader( new FileInputStream( pFile ), UTF_8 ) );
+        return new BufferedReader( new InputStreamReader( new FileInputStream( pFile ), IOUtils.UTF_8 ) );
     }
 
     public static void deleteIfExists( File pFile )
@@ -87,7 +85,7 @@ public class FileUtils {
             }
             finally {
                 if ( !closed ) {
-                    IOUtils.dispose( is );
+                    Closeables.dispose( is );
                 }
             }
             return b;
@@ -113,21 +111,13 @@ public class FileUtils {
             }
             finally {
                 if ( !closed ) {
-                    IOUtils.dispose( os );
+                    Closeables.dispose( os );
                 }
             }
         }
         catch ( IOException e ) {
             throw new FileSystemException( e );
         }
-        rollIn( file, pFile, new File( pFile.getAbsolutePath() + ".bak" ) );
-    }
-
-    public static void storeTextFile( File pFile, String... pLines )
-            throws FileSystemException {
-        Objects.assertNotNull( "File", pFile );
-        File file = new File( pFile.getAbsolutePath() + ".new" );
-        addLines( file, false, pLines );
         rollIn( file, pFile, new File( pFile.getAbsolutePath() + ".bak" ) );
     }
 
@@ -156,7 +146,7 @@ public class FileUtils {
         }
         finally {
             if ( !closed ) {
-                IOUtils.dispose( pWriter );
+                Closeables.dispose( pWriter );
             }
         }
     }
@@ -173,6 +163,14 @@ public class FileUtils {
         catch ( IOException e ) {
             throw new FileSystemException( e );
         }
+    }
+
+    public static void storeTextFile( File pFile, String... pLines )
+            throws FileSystemException {
+        Objects.assertNotNull( "File", pFile );
+        File file = new File( pFile.getAbsolutePath() + ".new" );
+        addLines( file, false, pLines );
+        rollIn( file, pFile, new File( pFile.getAbsolutePath() + ".bak" ) );
     }
 
     public static void rollIn( File pNewFile, File pTargetFile, File pBackupFile )

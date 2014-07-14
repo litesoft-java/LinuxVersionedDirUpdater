@@ -7,72 +7,88 @@ import java.io.*;
 
 /**
  * Directory Handler for the Main updater class
- * <p/>
- * Created by randallb on 12/26/13.
  */
 public class DirectoryHandler {
     private static final String INVALID_TARGET = "Invalid target path: ";
     private static final String INVALID_REMOTE = "Invalid remote path: ";
 
     private final boolean mCritical;
-    private final String mTarget;
+    private final String mTarget, mLocalVersion;
     private final File mTargetDirectory;
     private final LinkUpdaterHandler mLinkUpdaterHandler;
     private final VersionedDirectoryHandler mVersionedDirectoryHandler;
-    private String mLocalVersion;
+    private transient String mPendingUpdatedVersion;
 
     public DirectoryHandler( String pVersionedRootPath, String pTarget ) {
         mCritical = pTarget.endsWith( "!" );
         mTarget = mCritical ? pTarget.substring( 0, pTarget.length() - 1 ) : pTarget;
-        mTargetDirectory = checkLocalPathValidity( pVersionedRootPath );
+        Pair zPair = checkLocalPathValidity( pVersionedRootPath );
+        mLocalVersion = zPair.version;
+        mTargetDirectory = zPair.dir;
         mLinkUpdaterHandler = new LinkUpdaterHandler( mTarget, mTargetDirectory );
         mVersionedDirectoryHandler = new VersionedDirectoryHandler( mTarget, mTargetDirectory );
     }
 
-    private File checkLocalPathValidity( String pVersionedRootPath ) {
-        File versionedTargetDirectory = new File( pVersionedRootPath, mTarget );
+    private Pair checkLocalPathValidity( String pVersionedRootPath ) {
+        File zVersionedTargetDirectory = new File( pVersionedRootPath, mTarget );
 
-        if ( DirectoryUtils.existsThenAssertMutable( versionedTargetDirectory, INVALID_TARGET ) ) {
-            File currentDirectory = new File( versionedTargetDirectory, "current" );
+        if ( DirectoryUtils.existsThenAssertMutable( zVersionedTargetDirectory, INVALID_TARGET ) ) {
+            File currentDirectory = new File( zVersionedTargetDirectory, "current" );
 
             if ( DirectoryUtils.existsThenAssertMutable( currentDirectory, INVALID_TARGET ) ) {
                 File versionTextFile = new File( currentDirectory, "version.txt" );
 
                 if ( FileUtils.existsThenAssertMutable( versionTextFile, INVALID_TARGET ) ) {
-                    mLocalVersion = getVersion( versionTextFile );
+                    String zLocalVersion = new VersionFile( versionTextFile ).get();
+                    return new Pair( zVersionedTargetDirectory, zLocalVersion );
                 }
             }
         }
-        return versionedTargetDirectory;
+        return new Pair( zVersionedTargetDirectory );
     }
 
-    private String getVersion( File pVersionTextFile ) {
-        return Strings.getFirstEntry( FileUtils.loadTextFile( pVersionTextFile ) );
+    private static class Pair {
+        private final File dir;
+        private final String version;
+
+        private Pair( File pDir, String pVersion ) {
+            dir = pDir;
+            version = pVersion;
+        }
+
+        private Pair( File pDir ) {
+            this( pDir, null );
+        }
     }
 
-    private String getVersion( String pURLToVersionTextFile ) {
-        return Strings.getFirstEntry( URLUtils.loadTextFile( pURLToVersionTextFile ) );
+    /**
+     * Note: probably called under a different Thread!
+     */
+    public VersionedTargetTriad getState() {
+        return new VersionedTargetTriad( mTarget, mLocalVersion, mPendingUpdatedVersion );
     }
 
     public Outcome update( boolean pVerbose, String pURL, String pDeploymentVersion, Callback pCallback ) {
-        Callback.Target zCallback = pCallback.start( mTarget );
+        Callback.Target zCallback = pCallback.start( mTarget, mLocalVersion );
         try {
             String zURLToVersionTextFile = pURL + "/" + mTarget + "/" + pDeploymentVersion + ".txt";
-            String remoteVersion = getVersion( zURLToVersionTextFile );
-            if ( remoteVersion == null ) {
+            String zRemoteVersion = VersionFile.getFromURL( zURLToVersionTextFile );
+            if ( zRemoteVersion == null ) {
                 throw new IllegalArgumentException( INVALID_REMOTE + zURLToVersionTextFile );
             }
 
-            if ( remoteVersion.equals( mLocalVersion ) ) {
+            if ( zRemoteVersion.equals( mLocalVersion ) ) {
+                mPendingUpdatedVersion = null;
                 zCallback.completeNoUpdate();
                 return Outcome.NoUpdate;
             }
-            updateLinkFileTo( pURL, remoteVersion );
+            updateLinkFileTo( pURL, zRemoteVersion );
+            mPendingUpdatedVersion = zRemoteVersion;
             if ( mCritical ) {
-                zCallback.completeWithCriticalUpdate();
+                zCallback.completeWithCriticalUpdate( mPendingUpdatedVersion );
                 return Outcome.CriticalUpdate;
             }
-            zCallback.completeWithNonCriticalUpdate();
+            zCallback.completeWithNonCriticalUpdate( mPendingUpdatedVersion );
             return Outcome.Updated;
         }
         catch ( RuntimeException e ) {

@@ -7,8 +7,6 @@ import java.io.*;
 
 /**
  * Link Updater (File) Handler for the Main updater class
- * <p/>
- * Created by randallb on 12/26/13.
  */
 public class LinkUpdaterHandler {
     private static final String UPDATE_LNK = "updateLNK";

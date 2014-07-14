@@ -3,14 +3,12 @@ package org.litesoft.linuxversioneddirupdater;
 
 /**
  * Callback interfaces for Updater progress.
- * <p/>
- * Created by randallb on 12/29/13.
  */
 public interface Callback {
     interface Target {
-        public void completeWithCriticalUpdate();
+        public void completeWithCriticalUpdate( String pPendingUpdatedVersion );
 
-        public void completeWithNonCriticalUpdate();
+        public void completeWithNonCriticalUpdate( String pPendingUpdatedVersion );
 
         public void completeNoUpdate();
 
@@ -19,7 +17,7 @@ public interface Callback {
 
     public void starting( int pTargets );
 
-    public Target start( String pTarget );
+    public Target start( String pTarget, String pLocalVersion );
 
     public void finished();
 }

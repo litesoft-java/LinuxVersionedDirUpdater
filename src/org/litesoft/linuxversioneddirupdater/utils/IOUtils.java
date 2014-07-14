@@ -6,19 +6,19 @@ import java.util.*;
 
 /**
  * Collection of methods to operate on IOstreams/readers/files/etc.
- * Created by randallb on 12/27/13.
  */
 public class IOUtils {
 
-    public static void dispose( Closeable pCloseable ) {
-        if ( pCloseable != null ) {
-            try {
-                pCloseable.close();
-            }
-            catch ( IOException ignore ) {
-                //ignore it
-            }
-        }
+    public static final String UTF_8 = "UTF-8";
+
+    public static BufferedReader createReader( InputStream pInputStream )
+            throws IOException {
+        return new BufferedReader( new InputStreamReader( pInputStream, UTF_8 ) );
+    }
+
+    public static BufferedWriter createWriter( OutputStream pOS )
+            throws IOException {
+        return new BufferedWriter( new OutputStreamWriter( pOS, UTF_8 ) );
     }
 
     public static String[] loadTextFileLines( BufferedReader pReader )
@@ -30,7 +30,7 @@ public class IOUtils {
             }
         }
         finally {
-            dispose( pReader );
+            Closeables.dispose( pReader );
         }
         return lines.toArray( new String[lines.size()] );
     }
@@ -49,8 +49,8 @@ public class IOUtils {
             zCloseable.close();
         }
         finally {
-            dispose( pInputStream );
-            dispose( pOutputStream );
+            Closeables.dispose( pInputStream );
+            Closeables.dispose( pOutputStream );
         }
     }
 }

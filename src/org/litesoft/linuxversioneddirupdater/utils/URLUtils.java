@@ -6,8 +6,6 @@ import java.net.*;
 
 /**
  * IO related utils for URLS.
- * <p/>
- * Created by randallb on 12/27/13.
  */
 public class URLUtils {
     public static String[] loadTextFile( String pURLToTextFile )
@@ -31,7 +29,7 @@ public class URLUtils {
             zOutputStream = new FileOutputStream( pFile );
         }
         catch ( IOException e ) {
-            IOUtils.dispose( zInputStream );
+            Closeables.dispose( zInputStream );
             throw new FileSystemException( e );
         }
         try {

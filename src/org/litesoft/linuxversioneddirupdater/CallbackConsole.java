@@ -5,8 +5,6 @@ import java.util.*;
 
 /**
  * Callback interfaces for Updater progress.
- * <p/>
- * Created by randallb on 12/29/13.
  */
 public class CallbackConsole implements Callback {
     private final Map<String, TargetCallback> mCallbacksByTargets = new HashMap<>();
@@ -20,7 +18,7 @@ public class CallbackConsole implements Callback {
     }
 
     @Override
-    public Target start( String pTarget ) {
+    public Target start( String pTarget, String pLocalVersion ) {
         TargetCallback zCallback = new TargetCallback( pTarget );
         mCallbacksByTargets.put( pTarget, zCallback );
         return zCallback;
@@ -59,13 +57,13 @@ public class CallbackConsole implements Callback {
         }
 
         @Override
-        public void completeWithCriticalUpdate() {
+        public void completeWithCriticalUpdate( String pPendingUpdatedVersion ) {
             System.out.println( " Critical Update" );
             mOutcome = Outcome.CriticalUpdate;
         }
 
         @Override
-        public void completeWithNonCriticalUpdate() {
+        public void completeWithNonCriticalUpdate( String pPendingUpdatedVersion ) {
             System.out.println( " Non-Critical Update" );
             mOutcome = Outcome.Updated;
         }
