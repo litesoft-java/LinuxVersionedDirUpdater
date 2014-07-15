@@ -4,6 +4,7 @@ import org.litesoft.linuxversioneddirupdater.utils.*;
 
 import java.io.*;
 
+@SuppressWarnings("UnusedDeclaration")
 public class VersionFile {
     private final File mVersionTextFile;
 
