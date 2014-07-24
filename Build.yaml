@@ -1,4 +1,4 @@
-jar: LinuxVersionedDirUpdater
+jar: updater/LinuxVersionedDirUpdater
 main: org.litesoft.linuxversioneddirupdater.Updater
 
 resources: 
