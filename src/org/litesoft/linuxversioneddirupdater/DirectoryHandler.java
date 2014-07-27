@@ -35,10 +35,10 @@ public class DirectoryHandler {
         if ( DirectoryUtils.existsThenAssertMutable( zVersionedTargetDirectory, INVALID_TARGET ) ) {
             File currentDirectory = new File( zVersionedTargetDirectory, "current" );
 
-            if ( DirectoryUtils.existsThenAssertMutable( currentDirectory, INVALID_TARGET ) ) {
+            if ( currentDirectory.isDirectory() ) {
                 File versionTextFile = new File( currentDirectory, "version.txt" );
 
-                if ( FileUtils.existsThenAssertMutable( versionTextFile, INVALID_TARGET ) ) {
+                if ( FileUtils.existsThenAssertReadable( versionTextFile, INVALID_TARGET ) ) {
                     String zLocalVersion = new VersionFile( versionTextFile ).get();
                     return new Pair( zVersionedTargetDirectory, zLocalVersion );
                 }

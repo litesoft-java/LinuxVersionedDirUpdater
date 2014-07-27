@@ -44,15 +44,6 @@ public class DirectoryUtils {
         }
     }
 
-    @SuppressWarnings({"UnusedDeclaration"})
-    public static void deleteAllEntries( File pDirectory )
-            throws FileSystemException {
-        Objects.assertNotNull( "Directory", pDirectory );
-        if ( pDirectory.isDirectory() ) {
-            LowLevelDeleteAllEntries( pDirectory );
-        }
-    }
-
     private static void LowLevelDeleteAllEntries( File pDirectory )
             throws FileSystemException {
         String[] files = pDirectory.list();

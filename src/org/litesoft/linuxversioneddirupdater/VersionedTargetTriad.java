@@ -37,6 +37,7 @@ public class VersionedTargetTriad {
     }
 
     public StringBuilder appendTo( StringBuilder sb, int pMaxTargetLength, int pMaxLocalVersionLength ) {
+        sb.append( getTarget() );
         if ( hasLocalVersion() ) {
             sb.append( ": " );
             pad( sb, getTarget().length(), pMaxTargetLength );

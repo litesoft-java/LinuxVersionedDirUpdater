@@ -5,6 +5,16 @@ import java.io.*;
 
 @SuppressWarnings("UnusedDeclaration")
 public class FileUtils {
+    public static boolean existsThenAssertReadable( File pTargetPath, String pWhy ) {
+        if ( !pTargetPath.exists() ) {
+            return false;
+        }
+        if ( !acceptableReadable( pTargetPath ) ) {
+            throw new IllegalArgumentException( pWhy + pTargetPath.getAbsolutePath() );
+        }
+        return true;
+    }
+
     public static boolean existsThenAssertMutable( File pTargetPath, String pWhy ) {
         if ( !pTargetPath.exists() ) {
             return false;
@@ -15,8 +25,12 @@ public class FileUtils {
         return true;
     }
 
+    public static boolean acceptableReadable( File pTargetPath ) {
+        return pTargetPath.isFile() && pTargetPath.canRead();
+    }
+
     public static boolean acceptableMutable( File pTargetPath ) {
-        return pTargetPath.isFile() && pTargetPath.canRead() && pTargetPath.canWrite();
+        return acceptableReadable( pTargetPath ) && pTargetPath.canWrite();
     }
 
     public static String path( String pBase, String... pSubDirs ) {
@@ -46,6 +60,7 @@ public class FileUtils {
     public static void deleteIfExists( File pFile )
             throws FileSystemException {
         Objects.assertNotNull( "File", pFile );
+        // TODO: SymLinks: Files.delete(  );
         if ( pFile.isFile() ) {
             if ( !pFile.delete() || pFile.exists() ) {
                 throw new FileSystemException( "Unable to delete: " + pFile.getAbsolutePath() );
