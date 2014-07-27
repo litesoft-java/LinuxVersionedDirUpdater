@@ -72,8 +72,7 @@ public abstract class AppBackgroundUpdater {
         mOutComeCounts[pOutcome.ordinal()]++;
     }
 
-    private class InnerCallback implements Callback,
-                                           Callback.Target {
+    private class InnerCallback implements Callback {
         @Override
         public void starting( int pTargets ) {
             mExpectedTargets = pTargets;
@@ -84,14 +83,16 @@ public abstract class AppBackgroundUpdater {
         @Override
         public Target start( String pTarget, String pLocalVersion ) {
             mStarted++;
-            return this;
+            return new InnerTargetCallback();
         }
 
         @Override
         public void finished() {
             statsReady();
         }
+    }
 
+    private class InnerTargetCallback implements Callback.Target {
         @Override
         public void completeWithCriticalUpdate( String pPendingUpdatedVersion ) {
             record( Outcome.CriticalUpdate );
