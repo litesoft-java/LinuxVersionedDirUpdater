@@ -10,7 +10,7 @@ import java.io.*;
  */
 public class LinkUpdaterHandler {
     private static final String UPDATE_LNK = "updateLNK";
-    private static final String LINK_STARTS_WITH = "ln -f -s ";
+    private static final String LINK_STARTS_WITH = "ln -sfn ";
     private static final String LINK_STARTS_WITH_SLASH = LINK_STARTS_WITH + "/";
 
     private final String mTarget;

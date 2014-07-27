@@ -1,5 +1,5 @@
 jar: updater/LinuxVersionedDirUpdater
-main: org.litesoft.linuxversioneddirupdater.Updater
 
 resources: 
 - LICENSE
+- resources/|**

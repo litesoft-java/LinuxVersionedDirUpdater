@@ -20,8 +20,8 @@ public class DirectoryHandler {
     private transient String mPendingUpdatedVersion;
 
     public DirectoryHandler( String pVersionedRootPath, String pTarget ) {
-        mCritical = pTarget.endsWith( "!" );
-        mTarget = mCritical ? pTarget.substring( 0, pTarget.length() - 1 ) : pTarget;
+        mCritical = pTarget.startsWith( "!" );
+        mTarget = mCritical ? pTarget.substring( 1 ) : pTarget;
         Pair zPair = checkLocalPathValidity( pVersionedRootPath );
         mLocalVersion = zPair.version;
         mTargetDirectory = zPair.dir;
